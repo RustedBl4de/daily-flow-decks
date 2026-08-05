@@ -2,261 +2,77 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Daily-flow — OAuth Scope &amp; Data Handling Walkthrough</title>
+<title>Daily-flow — OAuth Verification Walkthrough — Sign in</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  :root{
-    --ink:#101828; --sub:#475467; --bg:#ffffff; --panel:#f2f6fa;
-    --accent:#1a56db; --ok:#067647; --warn:#b54708; --line:#e3e8ef;
-  }
-  *{box-sizing:border-box;}
-  html,body{height:100%;margin:0;}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
-    background:#0b1220; color:var(--ink);
+    background:#0d1020; color:#f4f5fb; margin:0; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:6vw;
   }
-  .deck{position:relative; width:100vw; height:100vh; overflow:hidden;}
-  .slide{
-    position:absolute; inset:0; display:none; flex-direction:column;
-    justify-content:center; padding:6vw 8vw; background:var(--bg); overflow:auto;
+  .box{background:#161a33; border:1px solid #2c2f57; border-radius:16px; padding:2.4rem 2.6rem; width:24rem; max-width:100%;}
+  h1{font-size:1.3rem; margin:0 0 .4rem;}
+  p{color:#9aa0c3; font-size:.92rem; margin:0 0 1.4rem;}
+  input[type=password]{
+    width:100%; padding:.75rem .9rem; border-radius:8px; border:1px solid #2c2f57;
+    background:#0d1020; color:#f4f5fb; font-size:1rem; margin-bottom:.9rem;
   }
-  .slide.active{display:flex;}
-  .slide.dark{background:#0f1a2e; color:#eef2fb;}
-  .slide.dark .sub, .slide.dark .kicker{color:#b7c3e0;}
-  .kicker{
-    text-transform:uppercase; letter-spacing:.14em; font-size:.72rem;
-    font-weight:700; color:var(--accent); margin-bottom:.9rem;
+  button{
+    width:100%; padding:.75rem .9rem; border-radius:8px; border:none;
+    background:#4f46e5; color:#fff; font-size:1rem; font-weight:600; cursor:pointer;
   }
-  h1{font-size:2.7rem; line-height:1.1; margin:0 0 1rem; font-weight:800; letter-spacing:-.02em;}
-  h2{font-size:2.05rem; line-height:1.16; margin:0 0 1.1rem; font-weight:800; letter-spacing:-.01em;}
-  .sub{font-size:1.15rem; color:var(--sub); line-height:1.55; max-width:48rem;}
-  ul.points{list-style:none; margin:1.3rem 0 0; padding:0; max-width:52rem;}
-  ul.points li{
-    font-size:1.05rem; line-height:1.5; padding:.5rem 0 .5rem 1.9rem; position:relative; color:var(--ink);
-  }
-  .dark ul.points li{color:#eef2fb;}
-  ul.points li::before{content:"✓"; position:absolute; left:0; color:var(--ok); font-weight:700;}
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:1.6rem; margin-top:1.5rem; max-width:62rem;}
-  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.3rem; margin-top:1.5rem; max-width:66rem;}
-  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:1.4rem 1.5rem;}
-  .dark .card{background:#16223a; border-color:#233257;}
-  .card h3{margin:0 0 .5rem; font-size:1rem; font-weight:700;}
-  .card p, .card code{margin:0; color:var(--sub); font-size:.92rem; line-height:1.5;}
-  .dark .card p{color:#c3ccdf;}
-  code{background:#eef1f6; padding:.12rem .4rem; border-radius:5px; font-size:.85em;}
-  .dark code{background:#1e2d4d; color:#dbe4f5;}
-  .status{display:inline-block; font-weight:700; font-size:.78rem; padding:.3rem .7rem; border-radius:999px; margin-bottom:.6rem;}
-  .status.warn{background:#fef0e6; color:var(--warn);}
-  .status.ok{background:#e7f6ee; color:var(--ok);}
-  table.scopes{border-collapse:collapse; width:100%; max-width:70rem; margin-top:1.3rem; font-size:.95rem;}
-  table.scopes th, table.scopes td{text-align:left; padding:.7rem .9rem; border-bottom:1px solid var(--line); vertical-align:top;}
-  .dark table.scopes th, .dark table.scopes td{border-color:#233257;}
-  table.scopes th{color:var(--sub); font-size:.78rem; text-transform:uppercase; letter-spacing:.06em;}
-  .flow{display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-top:1.6rem; max-width:66rem;}
-  .flow .step{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:.9rem 1.1rem; font-size:.92rem; font-weight:600; min-width:9rem;}
-  .dark .flow .step{background:#16223a; border-color:#233257;}
-  .flow .arrow{color:var(--accent); font-size:1.3rem; font-weight:700;}
-  .footer-note{position:absolute; bottom:1.6rem; left:8vw; right:8vw; font-size:.76rem; color:var(--sub); display:flex; justify-content:space-between;}
-  .nav{position:fixed; bottom:1.4rem; right:1.6rem; display:flex; gap:.5rem; z-index:10; align-items:center;}
-  .nav button{background:#101828; color:#fff; border:none; width:2.4rem; height:2.4rem; border-radius:50%; font-size:1.1rem; cursor:pointer; opacity:.85;}
-  .nav button:hover{opacity:1;}
-  .counter{color:#8a93ad; font-size:.85rem; font-weight:600; margin-right:.4rem;}
-  .link{color:var(--accent); font-weight:600;}
-  @media print{
-    .nav{display:none;}
-    .deck{position:static; width:auto; height:auto;}
-    .slide{position:static; display:flex !important; page-break-after:always; height:100vh;}
-  }
+  button:hover{background:#4338ca;}
+  .err{color:#f87171; font-size:.88rem; margin-top:.8rem; display:none;}
 </style>
 </head>
 <body>
-<div class="deck" id="deck">
+  <div class="box">
+    <h1>Daily-flow — OAuth Verification Walkthrough</h1>
+    <p>Enter the password you were given to view this deck.</p>
+    <form id="gate">
+      <input type="password" id="pw" autocomplete="current-password" autofocus placeholder="Password">
+      <button type="submit">Sign in</button>
+      <div class="err" id="err">Incorrect password. Try again.</div>
+    </form>
+  </div>
+  <script>
+    const SALT_B64 = "GT5fSY3mwoBQ38iWx2SZeQ==";
+    const IV_B64 = "pDsth0FNIlFklmm4";
+    const CIPHER_B64 = "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";
+    const ITERATIONS = 250000;
 
-  <section class="slide active dark">
-    <div class="kicker">Daily-flow · Google API Verification</div>
-    <h1>OAuth Scope &amp; Data Handling Walkthrough</h1>
-    <p class="sub">Prepared for Google's OAuth app verification review (sensitive + restricted scope justification, CASA security assessment). Documents exactly what is requested, why, and how the data is handled end to end.</p>
-    <div class="footer-note" style="position:static; margin-top:2.2rem;">
-      <span>App: Daily-flow (daily-flow-503302) · app.daily-flow.io</span>
-      <span>Contact: Rusty Chapin, rusty.chapin@gmail.com</span>
-    </div>
-  </section>
+    function b64ToBytes(b64){
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
 
-  <section class="slide">
-    <div class="kicker">What Daily-flow Is</div>
-    <h2>A daily commitment list, built from a user's own inbox and calendar.</h2>
-    <p class="sub">Daily-flow is a single-user productivity app. A user connects their Google account (read-only), and Daily-flow reads their Gmail and Calendar to surface the commitments and deadlines actually contained in that content — not a broadcast tool, not a multi-tenant workplace app, no data shared between users.</p>
-    <ul class="points">
-      <li>One connected Google account per user; read-only access only.</li>
-      <li>Output is private to that user: a personal "Today" list of commitments and deadlines.</li>
-      <li>No advertising, no data resale, no cross-user data sharing of any kind.</li>
-    </ul>
-  </section>
-
-  <section class="slide">
-    <div class="kicker">Scopes Requested</div>
-    <h2>Three scopes. Each mapped to one specific, visible feature.</h2>
-    <table class="scopes">
-      <tr><th>Scope</th><th>Type</th><th>Why it's needed</th></tr>
-      <tr>
-        <td><code>gmail.readonly</code></td>
-        <td>Restricted</td>
-        <td>Read email content to detect real commitments and deadlines (e.g. "reply by Friday," a school permission-slip due date) that never appear on a calendar. Read-only — Daily-flow never sends, deletes, or modifies email.</td>
-      </tr>
-      <tr>
-        <td><code>calendar.readonly</code></td>
-        <td>Restricted</td>
-        <td>Read calendar events so they can be merged chronologically with email-derived commitments into one "Today" list, and so conflicts between a meeting and a personal commitment can be surfaced. Read-only — Daily-flow never creates or edits events.</td>
-      </tr>
-      <tr>
-        <td><code>userinfo.email</code></td>
-        <td>Non-sensitive</td>
-        <td>Identify which Google account was connected, so it can be shown back to the user in Settings and disconnected individually.</td>
-      </tr>
-    </table>
-    <p class="sub" style="margin-top:1.2rem;">No write scopes of any kind are requested for Gmail or Calendar.</p>
-  </section>
-
-  <section class="slide dark">
-    <div class="kicker">End-to-End Data Flow</div>
-    <h2>What happens to a message from fetch to display.</h2>
-    <div class="flow">
-      <div class="step">1. Fetch from Gmail/Calendar API (OAuth, read-only)</div>
-      <span class="arrow">→</span>
-      <div class="step">2. In-memory candidate extraction, capped at 50,000 chars</div>
-      <span class="arrow">→</span>
-      <div class="step">3. One classification call to Anthropic (sender + subject + capped body)</div>
-      <span class="arrow">→</span>
-      <div class="step">4. Only the model's short output stored (deadline text, tags)</div>
-      <span class="arrow">→</span>
-      <div class="step">5. Shown to the user in their own "Today" list</div>
-    </div>
-    <p class="sub" style="margin-top:1.6rem;">The raw email/calendar body is never written to a database and never appears in a log line at any point in this pipeline — proven by an automated test suite, not just a code-review claim (see "Testing the Guarantee").</p>
-  </section>
-
-  <section class="slide">
-    <div class="kicker">Data Minimization</div>
-    <h2>The smallest slice of content that can do the job.</h2>
-    <div class="grid2">
-      <div class="card">
-        <h3>What's sent to the AI classifier</h3>
-        <p>Sender, subject line, and up to 16,000 characters of plain-text body (HTML converted to plain text first) — one call per message, in memory only, never logged or persisted.</p>
-      </div>
-      <div class="card">
-        <h3>What's actually stored</h3>
-        <p>Only the model's own short generated output: whether it's a commitment, the extracted deadline, a short source snippet, and goal tags — never the full original message.</p>
-      </div>
-      <div class="card">
-        <h3>What's never stored</h3>
-        <p>The full email body, the full calendar event description, and any raw content beyond the short snippet needed to show the user why an item was surfaced.</p>
-      </div>
-      <div class="card">
-        <h3>Third parties</h3>
-        <p>Anthropic (the classification model) is the only third party that ever processes message content, and only per the minimization above — confirmed against Anthropic's current no-training, 30-day-default-deletion commercial terms.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="slide dark">
-    <div class="kicker">Data Retention</div>
-    <h2>Extracted content expires. It does not accumulate forever.</h2>
-    <ul class="points">
-      <li><strong>35-day TTL</strong> on every extraction/goal-tag/watermark record, set automatically at write time — enforced natively by Firestore's built-in TTL feature, the same mechanism already used for session tokens and rate-limit records.</li>
-      <li><strong>7-day TTL, plus immediate content scrub</strong> when a user dismisses an item: the source snippet and deadline text are blanked in the same request that records the dismissal — not a later batch job.</li>
-      <li><strong>Structural metadata only</strong> (whether it was a commitment, a confidence score, timestamps) is kept slightly longer, for the user's own accuracy reporting — never the underlying quoted content.</li>
-      <li><strong>Full account/data deletion</strong> is supported on disconnect — a disconnect revokes the OAuth token at Google directly, not just a local database flag.</li>
-    </ul>
-  </section>
-
-  <section class="slide">
-    <div class="kicker">Security Controls</div>
-    <h2>Credentials and tokens are never handled casually.</h2>
-    <div class="grid3">
-      <div class="card"><h3>Token encryption</h3><p>OAuth refresh tokens are encrypted at rest using Google Cloud KMS in production — not stored in plaintext, not encrypted with an application-level static key.</p></div>
-      <div class="card"><h3>Secret management</h3><p>Every credential (OAuth client secret, API keys, signing secrets) lives in Google Secret Manager. Nothing is hardcoded or committed to source control.</p></div>
-      <div class="card"><h3>Real revocation</h3><p>Disconnecting a Google account calls Google's own token-revocation endpoint — the grant is actually torn down, not just hidden in the UI.</p></div>
-      <div class="card"><h3>Least privilege</h3><p>Only read scopes are requested. No Gmail send/modify/delete scope, no Calendar write scope, ever.</p></div>
-      <div class="card"><h3>Transport security</h3><p>All traffic (browser ↔ app, app ↔ Google API, app ↔ Anthropic API) is HTTPS/TLS only.</p></div>
-      <div class="card"><h3>Infrastructure</h3><p>Runs on Google Cloud Run with a dedicated least-privilege service account — no shared credentials across services.</p></div>
-    </div>
-  </section>
-
-  <section class="slide dark">
-    <div class="kicker">Testing the Guarantee</div>
-    <h2>"Never persisted or logged" is a passing test, not a promise.</h2>
-    <p class="sub">A dedicated regression test suite runs a real message with a long, uniquely identifiable marker string through the entire fetch → classify → store pipeline, then inspects every database write and every log line produced — for each connector — and asserts the marker never appears in either. The test is designed to actually fail if a future change accidentally logged or stored raw content, not just to assert "nothing happened."</p>
-    <ul class="points">
-      <li>Runs against a real Firestore emulator and a captured log buffer — not a mock that assumes the answer.</li>
-      <li>Included in the CI pipeline that gates every deploy — this guarantee cannot silently regress.</li>
-    </ul>
-  </section>
-
-  <section class="slide">
-    <div class="kicker">User-Facing Transparency</div>
-    <h2>What the user sees and controls.</h2>
-    <div class="grid2">
-      <div class="card"><h3>Consent screen</h3><p>Google's standard OAuth consent screen, listing exactly the three scopes above — nothing requested is undisclosed.</p></div>
-      <div class="card"><h3>Settings page</h3><p>Shows which Google account is connected and offers one-click disconnect at any time, with no retention beyond that action.</p></div>
-      <div class="card"><h3>Privacy Policy</h3><p>Live at <span class="link">daily-flow.io/privacy</span> — includes the Limited Use disclosure required for restricted-scope Google API data, naming exactly what's accessed and why.</p></div>
-      <div class="card"><h3>Dismiss = delete</h3><p>Dismissing a surfaced item immediately scrubs its underlying content, not just hides it from view.</p></div>
-    </div>
-  </section>
-
-  <section class="slide dark">
-    <div class="kicker">Current Status</div>
-    <h2>Honest state of the verification process.</h2>
-    <span class="status warn">Consent screen: Testing status</span>
-    <p class="sub">The OAuth consent screen is currently in Google's "Testing" publishing status, capped at 100 explicitly-added test users. This deck documents the data-handling practices this app already implements in production, as preparation for:</p>
-    <ul class="points">
-      <li>Google's sensitive-scope verification review (consent screen, scope justification, this walkthrough, and a demo video).</li>
-      <li>A CASA third-party security assessment, required because <code>gmail.readonly</code> and <code>calendar.readonly</code> are Google-restricted scopes.</li>
-    </ul>
-    <p class="sub">Everything described in this deck (minimization, retention, encryption, revocation, the automated test suite) is already built and running — this is a readiness walkthrough, not a plan for future work.</p>
-  </section>
-
-  <section class="slide">
-    <div class="kicker">Demo Video Plan</div>
-    <h2>What the required demo video will show.</h2>
-    <p class="sub">Google requires an unlisted YouTube video (3–7 minutes) showing the OAuth grant flow and the specific feature behind each sensitive/restricted scope. Reference example: <span class="link">"How To Make a Demo Video for Google OAuth"</span> (youtube.com/watch?v=yeIR0OvGLb0).</p>
-    <ul class="points">
-      <li>App name and OAuth client ID shown on screen.</li>
-      <li>Full consent screen shown, listing the exact three scopes above.</li>
-      <li>Gmail: a real email containing a commitment, then the extracted item appearing in the Today list.</li>
-      <li>Calendar: a real event merged into the same Today list alongside the email-derived commitment.</li>
-      <li>Settings page: disconnect flow, shown actually revoking access.</li>
-    </ul>
-  </section>
-
-  <section class="slide dark" style="justify-content:center; align-items:flex-start;">
-    <div class="kicker">Contact</div>
-    <h1 style="font-size:2.2rem;">Questions on any of the above?</h1>
-    <p class="sub">Rusty Chapin, Founder — rusty.chapin@gmail.com<br>Daily-flow · daily-flow-503302 · app.daily-flow.io</p>
-  </section>
-
-</div>
-
-<div class="nav">
-  <span class="counter" id="counter"></span>
-  <button onclick="go(-1)" aria-label="Previous slide">&#8592;</button>
-  <button onclick="go(1)" aria-label="Next slide">&#8594;</button>
-</div>
-
-<script>
-  const slides = document.querySelectorAll('.slide');
-  let i = 0;
-  function render(){
-    slides.forEach((s,idx)=>s.classList.toggle('active', idx===i));
-    document.getElementById('counter').textContent = (i+1)+' / '+slides.length;
-  }
-  function go(d){
-    i = Math.min(Math.max(i+d,0), slides.length-1);
-    render();
-  }
-  document.addEventListener('keydown', e=>{
-    if(e.key==='ArrowRight'||e.key===' ') go(1);
-    if(e.key==='ArrowLeft') go(-1);
-  });
-  render();
-</script>
+    document.getElementById('gate').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('pw').value;
+      const errEl = document.getElementById('err');
+      errEl.style.display = 'none';
+      try {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+          'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+        );
+        const key = await crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt: b64ToBytes(SALT_B64), iterations: ITERATIONS, hash: 'SHA-256' },
+          keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']
+        );
+        const plainBuf = await crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv: b64ToBytes(IV_B64) }, key, b64ToBytes(CIPHER_B64)
+        );
+        const html = new TextDecoder().decode(plainBuf);
+        document.open();
+        document.write(html);
+        document.close();
+      } catch (err) {
+        errEl.style.display = 'block';
+      }
+    });
+  </script>
 </body>
 </html>
