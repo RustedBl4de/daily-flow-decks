@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Daily-flow — OAuth Scope &amp; Data Handling Walkthrough</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ink:#101828; --sub:#475467; --bg:#ffffff; --panel:#f2f6fa;
+    --accent:#1a56db; --ok:#067647; --warn:#b54708; --line:#e3e8ef;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    background:#0b1220; color:var(--ink);
+  }
+  .deck{position:relative; width:100vw; height:100vh; overflow:hidden;}
+  .slide{
+    position:absolute; inset:0; display:none; flex-direction:column;
+    justify-content:center; padding:6vw 8vw; background:var(--bg); overflow:auto;
+  }
+  .slide.active{display:flex;}
+  .slide.dark{background:#0f1a2e; color:#eef2fb;}
+  .slide.dark .sub, .slide.dark .kicker{color:#b7c3e0;}
+  .kicker{
+    text-transform:uppercase; letter-spacing:.14em; font-size:.72rem;
+    font-weight:700; color:var(--accent); margin-bottom:.9rem;
+  }
+  h1{font-size:2.7rem; line-height:1.1; margin:0 0 1rem; font-weight:800; letter-spacing:-.02em;}
+  h2{font-size:2.05rem; line-height:1.16; margin:0 0 1.1rem; font-weight:800; letter-spacing:-.01em;}
+  .sub{font-size:1.15rem; color:var(--sub); line-height:1.55; max-width:48rem;}
+  ul.points{list-style:none; margin:1.3rem 0 0; padding:0; max-width:52rem;}
+  ul.points li{
+    font-size:1.05rem; line-height:1.5; padding:.5rem 0 .5rem 1.9rem; position:relative; color:var(--ink);
+  }
+  .dark ul.points li{color:#eef2fb;}
+  ul.points li::before{content:"✓"; position:absolute; left:0; color:var(--ok); font-weight:700;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:1.6rem; margin-top:1.5rem; max-width:62rem;}
+  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.3rem; margin-top:1.5rem; max-width:66rem;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:1.4rem 1.5rem;}
+  .dark .card{background:#16223a; border-color:#233257;}
+  .card h3{margin:0 0 .5rem; font-size:1rem; font-weight:700;}
+  .card p, .card code{margin:0; color:var(--sub); font-size:.92rem; line-height:1.5;}
+  .dark .card p{color:#c3ccdf;}
+  code{background:#eef1f6; padding:.12rem .4rem; border-radius:5px; font-size:.85em;}
+  .dark code{background:#1e2d4d; color:#dbe4f5;}
+  .status{display:inline-block; font-weight:700; font-size:.78rem; padding:.3rem .7rem; border-radius:999px; margin-bottom:.6rem;}
+  .status.warn{background:#fef0e6; color:var(--warn);}
+  .status.ok{background:#e7f6ee; color:var(--ok);}
+  table.scopes{border-collapse:collapse; width:100%; max-width:70rem; margin-top:1.3rem; font-size:.95rem;}
+  table.scopes th, table.scopes td{text-align:left; padding:.7rem .9rem; border-bottom:1px solid var(--line); vertical-align:top;}
+  .dark table.scopes th, .dark table.scopes td{border-color:#233257;}
+  table.scopes th{color:var(--sub); font-size:.78rem; text-transform:uppercase; letter-spacing:.06em;}
+  .flow{display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-top:1.6rem; max-width:66rem;}
+  .flow .step{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:.9rem 1.1rem; font-size:.92rem; font-weight:600; min-width:9rem;}
+  .dark .flow .step{background:#16223a; border-color:#233257;}
+  .flow .arrow{color:var(--accent); font-size:1.3rem; font-weight:700;}
+  .footer-note{position:absolute; bottom:1.6rem; left:8vw; right:8vw; font-size:.76rem; color:var(--sub); display:flex; justify-content:space-between;}
+  .nav{position:fixed; bottom:1.4rem; right:1.6rem; display:flex; gap:.5rem; z-index:10; align-items:center;}
+  .nav button{background:#101828; color:#fff; border:none; width:2.4rem; height:2.4rem; border-radius:50%; font-size:1.1rem; cursor:pointer; opacity:.85;}
+  .nav button:hover{opacity:1;}
+  .counter{color:#8a93ad; font-size:.85rem; font-weight:600; margin-right:.4rem;}
+  .link{color:var(--accent); font-weight:600;}
+  @media print{
+    .nav{display:none;}
+    .deck{position:static; width:auto; height:auto;}
+    .slide{position:static; display:flex !important; page-break-after:always; height:100vh;}
+  }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <section class="slide active dark">
+    <div class="kicker">Daily-flow · Google API Verification</div>
+    <h1>OAuth Scope &amp; Data Handling Walkthrough</h1>
+    <p class="sub">Prepared for Google's OAuth app verification review (sensitive + restricted scope justification, CASA security assessment). Documents exactly what is requested, why, and how the data is handled end to end.</p>
+    <div class="footer-note" style="position:static; margin-top:2.2rem;">
+      <span>App: Daily-flow (daily-flow-503302) · app.daily-flow.io</span>
+      <span>Contact: Rusty Chapin, rusty.chapin@gmail.com</span>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">What Daily-flow Is</div>
+    <h2>A daily commitment list, built from a user's own inbox and calendar.</h2>
+    <p class="sub">Daily-flow is a single-user productivity app. A user connects their Google account (read-only), and Daily-flow reads their Gmail and Calendar to surface the commitments and deadlines actually contained in that content — not a broadcast tool, not a multi-tenant workplace app, no data shared between users.</p>
+    <ul class="points">
+      <li>One connected Google account per user; read-only access only.</li>
+      <li>Output is private to that user: a personal "Today" list of commitments and deadlines.</li>
+      <li>No advertising, no data resale, no cross-user data sharing of any kind.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Scopes Requested</div>
+    <h2>Three scopes. Each mapped to one specific, visible feature.</h2>
+    <table class="scopes">
+      <tr><th>Scope</th><th>Type</th><th>Why it's needed</th></tr>
+      <tr>
+        <td><code>gmail.readonly</code></td>
+        <td>Restricted</td>
+        <td>Read email content to detect real commitments and deadlines (e.g. "reply by Friday," a school permission-slip due date) that never appear on a calendar. Read-only — Daily-flow never sends, deletes, or modifies email.</td>
+      </tr>
+      <tr>
+        <td><code>calendar.readonly</code></td>
+        <td>Restricted</td>
+        <td>Read calendar events so they can be merged chronologically with email-derived commitments into one "Today" list, and so conflicts between a meeting and a personal commitment can be surfaced. Read-only — Daily-flow never creates or edits events.</td>
+      </tr>
+      <tr>
+        <td><code>userinfo.email</code></td>
+        <td>Non-sensitive</td>
+        <td>Identify which Google account was connected, so it can be shown back to the user in Settings and disconnected individually.</td>
+      </tr>
+    </table>
+    <p class="sub" style="margin-top:1.2rem;">No write scopes of any kind are requested for Gmail or Calendar.</p>
+  </section>
+
+  <section class="slide dark">
+    <div class="kicker">End-to-End Data Flow</div>
+    <h2>What happens to a message from fetch to display.</h2>
+    <div class="flow">
+      <div class="step">1. Fetch from Gmail/Calendar API (OAuth, read-only)</div>
+      <span class="arrow">→</span>
+      <div class="step">2. In-memory candidate extraction, capped at 50,000 chars</div>
+      <span class="arrow">→</span>
+      <div class="step">3. One classification call to Anthropic (sender + subject + capped body)</div>
+      <span class="arrow">→</span>
+      <div class="step">4. Only the model's short output stored (deadline text, tags)</div>
+      <span class="arrow">→</span>
+      <div class="step">5. Shown to the user in their own "Today" list</div>
+    </div>
+    <p class="sub" style="margin-top:1.6rem;">The raw email/calendar body is never written to a database and never appears in a log line at any point in this pipeline — proven by an automated test suite, not just a code-review claim (see "Testing the Guarantee").</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Data Minimization</div>
+    <h2>The smallest slice of content that can do the job.</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>What's sent to the AI classifier</h3>
+        <p>Sender, subject line, and up to 16,000 characters of plain-text body (HTML converted to plain text first) — one call per message, in memory only, never logged or persisted.</p>
+      </div>
+      <div class="card">
+        <h3>What's actually stored</h3>
+        <p>Only the model's own short generated output: whether it's a commitment, the extracted deadline, a short source snippet, and goal tags — never the full original message.</p>
+      </div>
+      <div class="card">
+        <h3>What's never stored</h3>
+        <p>The full email body, the full calendar event description, and any raw content beyond the short snippet needed to show the user why an item was surfaced.</p>
+      </div>
+      <div class="card">
+        <h3>Third parties</h3>
+        <p>Anthropic (the classification model) is the only third party that ever processes message content, and only per the minimization above — confirmed against Anthropic's current no-training, 30-day-default-deletion commercial terms.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide dark">
+    <div class="kicker">Data Retention</div>
+    <h2>Extracted content expires. It does not accumulate forever.</h2>
+    <ul class="points">
+      <li><strong>35-day TTL</strong> on every extraction/goal-tag/watermark record, set automatically at write time — enforced natively by Firestore's built-in TTL feature, the same mechanism already used for session tokens and rate-limit records.</li>
+      <li><strong>7-day TTL, plus immediate content scrub</strong> when a user dismisses an item: the source snippet and deadline text are blanked in the same request that records the dismissal — not a later batch job.</li>
+      <li><strong>Structural metadata only</strong> (whether it was a commitment, a confidence score, timestamps) is kept slightly longer, for the user's own accuracy reporting — never the underlying quoted content.</li>
+      <li><strong>Full account/data deletion</strong> is supported on disconnect — a disconnect revokes the OAuth token at Google directly, not just a local database flag.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Security Controls</div>
+    <h2>Credentials and tokens are never handled casually.</h2>
+    <div class="grid3">
+      <div class="card"><h3>Token encryption</h3><p>OAuth refresh tokens are encrypted at rest using Google Cloud KMS in production — not stored in plaintext, not encrypted with an application-level static key.</p></div>
+      <div class="card"><h3>Secret management</h3><p>Every credential (OAuth client secret, API keys, signing secrets) lives in Google Secret Manager. Nothing is hardcoded or committed to source control.</p></div>
+      <div class="card"><h3>Real revocation</h3><p>Disconnecting a Google account calls Google's own token-revocation endpoint — the grant is actually torn down, not just hidden in the UI.</p></div>
+      <div class="card"><h3>Least privilege</h3><p>Only read scopes are requested. No Gmail send/modify/delete scope, no Calendar write scope, ever.</p></div>
+      <div class="card"><h3>Transport security</h3><p>All traffic (browser ↔ app, app ↔ Google API, app ↔ Anthropic API) is HTTPS/TLS only.</p></div>
+      <div class="card"><h3>Infrastructure</h3><p>Runs on Google Cloud Run with a dedicated least-privilege service account — no shared credentials across services.</p></div>
+    </div>
+  </section>
+
+  <section class="slide dark">
+    <div class="kicker">Testing the Guarantee</div>
+    <h2>"Never persisted or logged" is a passing test, not a promise.</h2>
+    <p class="sub">A dedicated regression test suite runs a real message with a long, uniquely identifiable marker string through the entire fetch → classify → store pipeline, then inspects every database write and every log line produced — for each connector — and asserts the marker never appears in either. The test is designed to actually fail if a future change accidentally logged or stored raw content, not just to assert "nothing happened."</p>
+    <ul class="points">
+      <li>Runs against a real Firestore emulator and a captured log buffer — not a mock that assumes the answer.</li>
+      <li>Included in the CI pipeline that gates every deploy — this guarantee cannot silently regress.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">User-Facing Transparency</div>
+    <h2>What the user sees and controls.</h2>
+    <div class="grid2">
+      <div class="card"><h3>Consent screen</h3><p>Google's standard OAuth consent screen, listing exactly the three scopes above — nothing requested is undisclosed.</p></div>
+      <div class="card"><h3>Settings page</h3><p>Shows which Google account is connected and offers one-click disconnect at any time, with no retention beyond that action.</p></div>
+      <div class="card"><h3>Privacy Policy</h3><p>Live at <span class="link">daily-flow.io/privacy</span> — includes the Limited Use disclosure required for restricted-scope Google API data, naming exactly what's accessed and why.</p></div>
+      <div class="card"><h3>Dismiss = delete</h3><p>Dismissing a surfaced item immediately scrubs its underlying content, not just hides it from view.</p></div>
+    </div>
+  </section>
+
+  <section class="slide dark">
+    <div class="kicker">Current Status</div>
+    <h2>Honest state of the verification process.</h2>
+    <span class="status warn">Consent screen: Testing status</span>
+    <p class="sub">The OAuth consent screen is currently in Google's "Testing" publishing status, capped at 100 explicitly-added test users. This deck documents the data-handling practices this app already implements in production, as preparation for:</p>
+    <ul class="points">
+      <li>Google's sensitive-scope verification review (consent screen, scope justification, this walkthrough, and a demo video).</li>
+      <li>A CASA third-party security assessment, required because <code>gmail.readonly</code> and <code>calendar.readonly</code> are Google-restricted scopes.</li>
+    </ul>
+    <p class="sub">Everything described in this deck (minimization, retention, encryption, revocation, the automated test suite) is already built and running — this is a readiness walkthrough, not a plan for future work.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Demo Video Plan</div>
+    <h2>What the required demo video will show.</h2>
+    <p class="sub">Google requires an unlisted YouTube video (3–7 minutes) showing the OAuth grant flow and the specific feature behind each sensitive/restricted scope. Reference example: <span class="link">"How To Make a Demo Video for Google OAuth"</span> (youtube.com/watch?v=yeIR0OvGLb0).</p>
+    <ul class="points">
+      <li>App name and OAuth client ID shown on screen.</li>
+      <li>Full consent screen shown, listing the exact three scopes above.</li>
+      <li>Gmail: a real email containing a commitment, then the extracted item appearing in the Today list.</li>
+      <li>Calendar: a real event merged into the same Today list alongside the email-derived commitment.</li>
+      <li>Settings page: disconnect flow, shown actually revoking access.</li>
+    </ul>
+  </section>
+
+  <section class="slide dark" style="justify-content:center; align-items:flex-start;">
+    <div class="kicker">Contact</div>
+    <h1 style="font-size:2.2rem;">Questions on any of the above?</h1>
+    <p class="sub">Rusty Chapin, Founder — rusty.chapin@gmail.com<br>Daily-flow · daily-flow-503302 · app.daily-flow.io</p>
+  </section>
+
+</div>
+
+<div class="nav">
+  <span class="counter" id="counter"></span>
+  <button onclick="go(-1)" aria-label="Previous slide">&#8592;</button>
+  <button onclick="go(1)" aria-label="Next slide">&#8594;</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let i = 0;
+  function render(){
+    slides.forEach((s,idx)=>s.classList.toggle('active', idx===i));
+    document.getElementById('counter').textContent = (i+1)+' / '+slides.length;
+  }
+  function go(d){
+    i = Math.min(Math.max(i+d,0), slides.length-1);
+    render();
+  }
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowRight'||e.key===' ') go(1);
+    if(e.key==='ArrowLeft') go(-1);
+  });
+  render();
+</script>
+</body>
+</html>

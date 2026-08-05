@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Daily-flow — Decks</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    background:#0d1020; color:#f4f5fb; margin:0; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; padding:6vw;
+  }
+  h1{font-size:2rem; margin-bottom:.4rem;}
+  p{color:#b7bce3; margin-top:0;}
+  .cards{display:flex; gap:1.5rem; margin-top:2rem; flex-wrap:wrap; justify-content:center;}
+  a.card{
+    display:block; width:20rem; background:#1b1e3a; border:1px solid #2c2f57; border-radius:14px;
+    padding:1.6rem 1.7rem; text-decoration:none; color:#f4f5fb; transition:border-color .15s;
+  }
+  a.card:hover{border-color:#4f46e5;}
+  a.card h2{font-size:1.15rem; margin:0 0 .5rem;}
+  a.card p{color:#9aa0c3; font-size:.92rem; margin:0;}
+</style>
+</head>
+<body>
+  <h1>Daily-flow</h1>
+  <p>Your whole life, one list, every day.</p>
+  <div class="cards">
+    <a class="card" href="pitch-deck.html">
+      <h2>Pitch Deck →</h2>
+      <p>For angels and early users. Problem, product, market, traction, and the ask.</p>
+    </a>
+    <a class="card" href="oauth-verification-deck.html">
+      <h2>OAuth &amp; Data Handling Walkthrough →</h2>
+      <p>For Google's OAuth verification review. Scopes, data flow, retention, and security controls.</p>
+    </a>
+  </div>
+</body>
+</html>

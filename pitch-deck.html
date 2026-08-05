@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Daily-flow — Pitch Deck</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ink:#1a1f36; --sub:#565f75; --bg:#ffffff; --panel:#f6f7fb;
+    --accent:#4f46e5; --accent-2:#059669; --line:#e3e6ef;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    background:#0d1020; color:var(--ink);
+  }
+  .deck{position:relative; width:100vw; height:100vh; overflow:hidden;}
+  .slide{
+    position:absolute; inset:0; display:none; flex-direction:column;
+    justify-content:center; padding:6vw 8vw; background:var(--bg);
+  }
+  .slide.active{display:flex;}
+  .slide.dark{background:#12142a; color:#f4f5fb;}
+  .slide.dark .sub, .slide.dark .kicker{color:#b7bce3;}
+  .kicker{
+    text-transform:uppercase; letter-spacing:.14em; font-size:.72rem;
+    font-weight:700; color:var(--accent); margin-bottom:.9rem;
+  }
+  h1{font-size:3.1rem; line-height:1.08; margin:0 0 1rem; font-weight:800; letter-spacing:-.02em;}
+  h2{font-size:2.3rem; line-height:1.12; margin:0 0 1.2rem; font-weight:800; letter-spacing:-.015em;}
+  .sub{font-size:1.3rem; color:var(--sub); line-height:1.5; max-width:44rem;}
+  .tag{font-size:1.5rem; color:var(--sub); font-weight:500; margin-top:.4rem;}
+  ul.points{list-style:none; margin:1.4rem 0 0; padding:0; max-width:50rem;}
+  ul.points li{
+    font-size:1.15rem; line-height:1.5; padding:.55rem 0 .55rem 1.9rem; position:relative; color:var(--ink);
+  }
+  .dark ul.points li{color:#f4f5fb;}
+  ul.points li::before{
+    content:"→"; position:absolute; left:0; color:var(--accent); font-weight:700;
+  }
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:2.2rem; margin-top:1.6rem; max-width:60rem;}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:1.6rem 1.7rem;
+  }
+  .dark .card{background:#1b1e3a; border-color:#2c2f57;}
+  .card h3{margin:0 0 .5rem; font-size:1.05rem; font-weight:700;}
+  .card p{margin:0; color:var(--sub); font-size:.98rem; line-height:1.5;}
+  .quote{
+    font-size:1.4rem; font-style:italic; line-height:1.5; max-width:46rem; color:var(--ink);
+    border-left:4px solid var(--accent); padding-left:1.4rem; margin:1.2rem 0;
+  }
+  .quote cite{display:block; font-style:normal; font-size:.95rem; color:var(--sub); margin-top:.6rem;}
+  .num{font-size:2.6rem; font-weight:800; color:var(--accent);}
+  .stat-row{display:flex; gap:3rem; margin-top:1.6rem; flex-wrap:wrap;}
+  .stat{max-width:14rem;}
+  .stat .label{color:var(--sub); font-size:.92rem; margin-top:.3rem;}
+  .badge{
+    display:inline-block; background:#fef3c7; color:#92400e; font-weight:700; font-size:.78rem;
+    padding:.25rem .6rem; border-radius:999px; margin-left:.6rem; vertical-align:middle;
+  }
+  table.terms{border-collapse:collapse; margin-top:1.4rem; font-size:1.05rem;}
+  table.terms td{padding:.55rem 1.4rem .55rem 0; border-bottom:1px solid var(--line);}
+  .dark table.terms td{border-color:#2c2f57;}
+  table.terms td:first-child{color:var(--sub); font-weight:600;}
+  .footer-note{
+    position:absolute; bottom:1.6rem; left:8vw; right:8vw; font-size:.78rem; color:var(--sub);
+    display:flex; justify-content:space-between;
+  }
+  .nav{
+    position:fixed; bottom:1.4rem; right:1.6rem; display:flex; gap:.5rem; z-index:10; align-items:center;
+    font-family:inherit;
+  }
+  .nav button{
+    background:#1a1f36; color:#fff; border:none; width:2.4rem; height:2.4rem; border-radius:50%;
+    font-size:1.1rem; cursor:pointer; opacity:.85;
+  }
+  .nav button:hover{opacity:1;}
+  .counter{color:#9aa0c3; font-size:.85rem; font-weight:600; margin-right:.4rem;}
+  .placeholder{
+    border:2px dashed #c7cbe4; border-radius:12px; padding:1.4rem; color:var(--sub);
+    font-size:.92rem; max-width:40rem; margin-top:1.4rem; background:#fbfbfe;
+  }
+  .dark .placeholder{background:#181a35; border-color:#33366a;}
+  @media print{
+    .nav{display:none;}
+    .deck{position:static; width:auto; height:auto;}
+    .slide{position:static; display:flex !important; page-break-after:always; height:100vh;}
+  }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <section class="slide active dark">
+    <div class="kicker">Daily-flow · Pre-Seed</div>
+    <h1>Your whole life, one list, every day.</h1>
+    <p class="tag">The first personal assistant built for a whole person, not one slice of their day.</p>
+    <div class="footer-note" style="position:static; margin-top:2.4rem;">
+      <span>daily-flow.io · app.daily-flow.io</span>
+      <span>Rusty Chapin, Founder</span>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The Problem</div>
+    <h2>You are the integration layer for your own life.</h2>
+    <p class="sub">Your calendar knows your meetings. Your inbox knows your promises. Your group chat knows the carpool schedule. None of them talk to each other — so every day, a person has to manually reconcile six tools that were each built for one slice of who they are.</p>
+    <ul class="points">
+      <li>A mom running a household is also an employee.</li>
+      <li>A teacher grading papers at 9pm is also a parent deciding whether to make the school play.</li>
+      <li>A team lead closing a deal is also supposed to show up for date night.</li>
+      <li>Every existing tool forces people to manage these as separate lives. They're not separate — it's one life, one day.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The Solution</div>
+    <h2>One list, reorganized as your day actually changes.</h2>
+    <p class="sub">Daily-flow connects to the accounts that make up a real life — email, calendar, and beyond — and turns all of it into a single, continuously updated list of what matters today, organized around your own stated goals, not just what's on your calendar.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>Not a dashboard</h3>
+        <p>You don't interpret it. It's already interpreted — commitments and deadlines, extracted, not just displayed.</p>
+      </div>
+      <div class="card">
+        <h3>Not six apps</h3>
+        <p>One list. A meeting moves, a message comes in — the list updates itself, not you.</p>
+      </div>
+      <div class="card">
+        <h3>Reads real commitments</h3>
+        <p>An email, a calendar invite, a thread — anywhere a promise actually gets made, not just what someone typed onto a calendar.</p>
+      </div>
+      <div class="card">
+        <h3>Built around your goals</h3>
+        <p>Two people with an identical schedule get different lists, because what they're optimizing their day for isn't identical.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide dark">
+    <div class="kicker">How It Works</div>
+    <h2>Connect → Extract → Prioritize → One List</h2>
+    <ul class="points">
+      <li><strong>Connect</strong> the accounts that make up your life — Gmail and Google Calendar today, read-only, one click, disconnect anytime.</li>
+      <li><strong>Extract</strong> — every message and event is read for real commitments and deadlines using an LLM classifier, not keyword matching.</li>
+      <li><strong>Prioritize</strong> — commitments are weighed against the goals you've told Daily-flow matter to you.</li>
+      <li><strong>Surface</strong> — one continuously updated "Today" list, duplicate messages about the same commitment collapsed into one row, dismiss/complete built in.</li>
+    </ul>
+    <div class="placeholder">[Insert product screenshot: the "Today" view / commitments list here before presenting.]</div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Why Now</div>
+    <h2>This wasn't buildable five years ago. It is now.</h2>
+    <p class="sub">Two things had to mature together, and only recently did both arrive at once:</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>AI that reads unstructured text at scale</h3>
+        <p>Reliably turning a messy email thread into "this is a commitment, due Thursday" wasn't possible at consumer cost and accuracy until now.</p>
+      </div>
+      <div class="card">
+        <h3>Mature APIs into where life lives</h3>
+        <p>Gmail, Calendar, and beyond now expose the real-time, secure hooks (push notifications, delta sync) this needs — not just batch exports.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Market</div>
+    <h2>Anyone whose day doesn't fit in one app. That's most people.</h2>
+    <p class="sub">Beachhead first, then expand — not a broad blitz on day one.</p>
+    <ul class="points">
+      <li><strong>Beachhead: working parents</strong> juggling a job and a household — tightest pain, highest willingness to try at $1/month, strongest word-of-mouth network (pickup lines, group chats).</li>
+      <li><strong>Expansion 1: teachers</strong> — natural overlap with working parents ("lesson plan meets permission slip meets parent email").</li>
+      <li><strong>Expansion 2: team leads/managers</strong> balancing a team and a life outside it.</li>
+      <li><strong>Expansion 3: students</strong> juggling school, work, and everything else.</li>
+    </ul>
+    <div class="placeholder">[Add sized TAM/SAM/SOM figures here from a sourced estimate — e.g. U.S. working-parent household count — before using with investors. Left out rather than invented.]</div>
+  </section>
+
+  <section class="slide dark">
+    <div class="kicker">Business Model</div>
+    <h2>$1/month or $10/year. Deliberately, almost embarrassingly cheap.</h2>
+    <p class="sub">Below the threshold where price is ever the objection — the goal is removing "should I try this" as a decision, not maximizing revenue per user this early.</p>
+    <div class="stat-row">
+      <div class="stat"><div class="num">$1</div><div class="label">per month</div></div>
+      <div class="stat"><div class="num">$10</div><div class="label">per year</div></div>
+      <div class="stat"><div class="num">0%</div><div class="label">of marketing spent on ads to date — growth loop first</div></div>
+    </div>
+    <p class="sub" style="margin-top:1.6rem;">Growth engine: an already-built invite-a-friend referral loop (highest-leverage, near-zero marginal cost) ships before any paid acquisition — pricing this low is itself a growth lever, not a margin lever.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Traction</div>
+    <h2>A real, live product — pre-public-launch.</h2>
+    <p class="sub">Honest stage: the product works end-to-end today and is being hardened with real usage before scaling distribution — not a slide deck ahead of any code.</p>
+    <div class="grid2">
+      <div class="card"><h3>Live and running</h3><p>Magic-link auth, Stripe billing infrastructure, and a real Google (Gmail + Calendar) connector are deployed to production, not a prototype.</p></div>
+      <div class="card"><h3>Smart Today is default-on</h3><p>Commitment extraction, goal tagging, dismiss/complete, and duplicate collapsing are live for every connected user — not gated behind a beta flag.</p></div>
+      <div class="card"><h3>Real infrastructure</h3><p>Push-based Gmail/Calendar detection, a 30-minute backstop poll, and a weekly accuracy report are provisioned and running on Google Cloud.</p></div>
+      <div class="card"><h3>Early cohort, by design</h3><p>Currently in a small, invite-gated testing cohort while the OAuth consent screen completes Google's verification — deliberately not yet public. See Ask.</p></div>
+    </div>
+  </section>
+
+  <section class="slide dark">
+    <div class="kicker">Go-To-Market</div>
+    <h2>Prove the message before scaling the channel.</h2>
+    <ul class="points">
+      <li><strong>Phase 0 (now):</strong> founder-led outreach, invite-a-friend live, one sharp landing page, real customer stories — success metric is organic invites, not signups.</li>
+      <li><strong>Phase 1:</strong> content/SEO around real pain ("forgot permission slip," not "life management app"), community-first distribution (parenting forums, school groups, micro-influencers), referral-loop tuning.</li>
+      <li><strong>Phase 2:</strong> scale whatever channel proved out in Phase 1, paid social/search at known CAC/LTV, platform and school partnerships as the connector roadmap expands.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Why Us</div>
+    <h2>The neutral layer no platform owner can build.</h2>
+    <p class="sub">Big platforms are building AI into their own calendars, inboxes, and assistants — but each is building for its own walled garden. None of them can be the thing that sees a person's whole life across every platform they actually use, because doing that means sending their own users' attention outside their own ecosystem.</p>
+    <div class="quote">"That neutrality — genuinely spanning every tool someone uses, not just the ones one company owns — is the thing only a focused, independent product can do."</div>
+  </section>
+
+  <section class="slide dark">
+    <div class="kicker">Trust, By Design</div>
+    <h2>The thing that makes this whole category possible.</h2>
+    <ul class="points">
+      <li>Least-privilege, read-only access to every connected account.</li>
+      <li>One-click disconnect that actually revokes the token at the source — not just a local flag flip.</li>
+      <li>A hard, engineered limit on data retention (35-day TTL on extracted content, 7 days and immediately scrubbed on dismiss) — never "kept forever by default."</li>
+      <li>Never sold, never used to advertise, never shared with the platforms the data came from.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Team</div>
+    <h2>Rusty Chapin — Founder</h2>
+    <p class="sub">Designed, built, and shipped Daily-flow's full production stack solo: backend, frontend, infrastructure, and the Smart Today extraction pipeline — currently live on Google Cloud.</p>
+    <div class="placeholder">[Add founder bio detail, relevant prior experience, and any advisors here before sending to investors.]</div>
+  </section>
+
+  <section class="slide dark">
+    <div class="kicker">The Ask</div>
+    <h2>Raising $500K pre-seed. <span class="badge">Founder-set — confirm before sending</span></h2>
+    <table class="terms">
+      <tr><td>Instrument</td><td>SAFE (post-money)</td></tr>
+      <tr><td>Valuation cap</td><td>$5,000,000</td></tr>
+      <tr><td>Discount</td><td>None</td></tr>
+      <tr><td>Implied dilution at cap</td><td>~10%</td></tr>
+    </table>
+    <p class="sub" style="margin-top:1.4rem;">Use of funds:</p>
+    <ul class="points">
+      <li><strong>40% — Product:</strong> Outlook, Drive, and Slack connectors; clearing Smart Today's offline accuracy gate at scale.</li>
+      <li><strong>35% — Growth:</strong> tuning the referral loop and testing the first paid channel per the Phase 1 plan.</li>
+      <li><strong>25% — Team:</strong> runway for the first engineering hire.</li>
+    </ul>
+  </section>
+
+  <section class="slide dark" style="justify-content:center; align-items:flex-start;">
+    <div class="kicker">Thank You</div>
+    <h1 style="font-size:2.6rem;">One life, one day, one list.</h1>
+    <p class="sub">Rusty Chapin · rusty.chapin@gmail.com · daily-flow.io</p>
+  </section>
+
+</div>
+
+<div class="nav">
+  <span class="counter" id="counter"></span>
+  <button onclick="go(-1)" aria-label="Previous slide">&#8592;</button>
+  <button onclick="go(1)" aria-label="Next slide">&#8594;</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let i = 0;
+  function render(){
+    slides.forEach((s,idx)=>s.classList.toggle('active', idx===i));
+    document.getElementById('counter').textContent = (i+1)+' / '+slides.length;
+  }
+  function go(d){
+    i = Math.min(Math.max(i+d,0), slides.length-1);
+    render();
+  }
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowRight'||e.key===' ') go(1);
+    if(e.key==='ArrowLeft') go(-1);
+  });
+  render();
+</script>
+</body>
+</html>
